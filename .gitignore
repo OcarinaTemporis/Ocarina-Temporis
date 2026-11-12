@@ -19,6 +19,7 @@ docs/doxygen/
 *.z64
 *.n64
 *.v64
+!build/ntsc-1.0/oot-ntsc-1.0-compressed.z64
 
 # Tools
 .venv/
