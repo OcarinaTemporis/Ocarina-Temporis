@@ -2332,16 +2332,27 @@ void Message_Decode(PlayState* play) {
                 PRINTF(T("\n金スタ合計数 ＝ %d", "\nTotal number of gold skulls = %d"),
                        gSaveContext.save.info.inventory.gsTokens);
 
-                romanGlyphCount = RomanNumerals_Format(gSaveContext.save.info.inventory.gsTokens, romanGlyphs,
-                                                       ARRAY_COUNT(romanGlyphs));
+                if (gSaveContext.save.info.inventory.gsTokens == 0) {
+                    static const u8 sZeroTokens[] = "nullae";
 
-                for (i = 0; i < romanGlyphCount; i++) {
-                    u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+                    for (i = 0; sZeroTokens[i] != '\0'; i++) {
+                        Font_LoadChar(font, sZeroTokens[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = sZeroTokens[i];
+                        decodedBufPos++;
+                    }
+                } else {
+                    romanGlyphCount = RomanNumerals_Format(gSaveContext.save.info.inventory.gsTokens, romanGlyphs,
+                                                           ARRAY_COUNT(romanGlyphs));
 
-                    Font_LoadChar(font, romanChar - ' ', charTexIdx);
-                    charTexIdx += FONT_CHAR_TEX_SIZE;
-                    MSG_BUF_DECODED[decodedBufPos] = romanChar;
-                    decodedBufPos++;
+                    for (i = 0; i < romanGlyphCount; i++) {
+                        u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                        Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = romanChar;
+                        decodedBufPos++;
+                    }
                 }
                 decodedBufPos--;
             } else if (curChar == MESSAGE_FISH_INFO) {
@@ -2394,6 +2405,7 @@ void Message_Decode(PlayState* play) {
                     case HS_HBA:
                     case HS_POE_POINTS:
                     case HS_FISHING:
+                    case HS_HORSE_RACE:
                     case HS_MARATHON: {
                         u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
                         s32 romanGlyphCount;
@@ -2401,23 +2413,37 @@ void Message_Decode(PlayState* play) {
                             'I', 'V', 'X', 'L', 'C', 'D', 'M',
                         };
 
-                        romanGlyphCount = RomanNumerals_Format(value, romanGlyphs, ARRAY_COUNT(romanGlyphs));
+                        if ((value == 0) &&
+                            (((MSG_BUF[msgCtx->msgBufPos] & 0xFF) == HS_FISHING) ||
+                             ((MSG_BUF[msgCtx->msgBufPos] & 0xFF) == HS_HBA))) {
+                            static const u8 sFishingZero[] = "nullae";
+                            static const u8 sHbaZero[] = "nulla";
+                            const u8* zeroText =
+                                ((MSG_BUF[msgCtx->msgBufPos] & 0xFF) == HS_HBA) ? sHbaZero : sFishingZero;
 
-                        for (i = 0; i < romanGlyphCount; i++) {
-                            u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+                            for (i = 0; zeroText[i] != '\0'; i++) {
+                                Font_LoadChar(font, zeroText[i] - ' ', charTexIdx);
+                                charTexIdx += FONT_CHAR_TEX_SIZE;
+                                MSG_BUF_DECODED[decodedBufPos] = zeroText[i];
+                                decodedBufPos++;
+                            }
+                        } else {
+                            romanGlyphCount = RomanNumerals_Format(value, romanGlyphs, ARRAY_COUNT(romanGlyphs));
 
-                            Font_LoadChar(font, romanChar - ' ', charTexIdx);
-                            charTexIdx += FONT_CHAR_TEX_SIZE;
-                            MSG_BUF_DECODED[decodedBufPos] = romanChar;
-                            decodedBufPos++;
+                            for (i = 0; i < romanGlyphCount; i++) {
+                                u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                                Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                                charTexIdx += FONT_CHAR_TEX_SIZE;
+                                MSG_BUF_DECODED[decodedBufPos] = romanChar;
+                                decodedBufPos++;
+                            }
                         }
                         decodedBufPos--;
                         break;
                     }
                     case HS_UNK_05:
                         break;
-                    case HS_HORSE_RACE:
-                    // case HS_MARATHON:
                     case HS_DAMPE_RACE:
                         digits[0] = digits[1] = digits[2] = 0;
                         digits[3] = value;

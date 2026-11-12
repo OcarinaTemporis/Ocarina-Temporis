@@ -471,6 +471,29 @@ static void* sMapPageBgQuadsENGTexs[] = {
     gPauseMap24Tex,
 };
 
+#if OOT_NTSC
+static void* sMapPageBgQuadsENGDungeonTexs[] = {
+    // column 1
+    gPauseMap00Tex,
+    gPauseMap01Tex,
+    gPauseMap02Tex,
+    gPauseMap03Tex,
+    gPauseMap04Tex,
+    // column 2
+    gPauseDungeon10ENGTex,
+    gPauseMap11Tex,
+    gPauseMap12Tex,
+    gPauseMap13Tex,
+    gPauseMap14Tex,
+    // column 3
+    gPauseMap20Tex,
+    gPauseMap21Tex,
+    gPauseMap22Tex,
+    gPauseMap23Tex,
+    gPauseMap24Tex,
+};
+#endif
+
 static void* sQuestPageBgQuadsENGTexs[] = {
     // column 1
     gPauseQuestStatus00ENGTex,
@@ -537,7 +560,11 @@ static void* sGameOverTexs[] = {
 #if OOT_NTSC
 #define EQUIPMENT_TEXS(language) ((language) != LANGUAGE_JPN ? sEquipPageBgQuadsENGTexs : sEquipPageBgQuadsJPNTexs)
 #define SELECT_ITEM_TEXS(language) ((language) != LANGUAGE_JPN ? sItemPageBgQuadsENGTexs : sItemPageBgQuadsJPNTexs)
-#define MAP_TEXS(language) ((language) != LANGUAGE_JPN ? sMapPageBgQuadsENGTexs : sMapPageBgQuadsJPNTexs)
+#define MAP_TEXS(language, inDungeon) \
+    ((language) == LANGUAGE_JPN ? sMapPageBgQuadsJPNTexs \
+                                : ((inDungeon) ? sMapPageBgQuadsENGDungeonTexs : sMapPageBgQuadsENGTexs))
+#define TO_MAP_LABEL_TEX(language, inDungeon, isMapLabel, texture) \
+    (((inDungeon) && ((language) != LANGUAGE_JPN) && (isMapLabel)) ? gPauseToDungeonENGTex : (texture))
 #define QUEST_STATUS_TEXS(language) ((language) != LANGUAGE_JPN ? sQuestPageBgQuadsENGTexs : sQuestPageBgQuadsJPNTexs)
 #define SAVE_TEXS(language) ((language) != LANGUAGE_JPN ? sSavePromptBgQuadsENGTexs : sSavePromptBgQuadsJPNTexs)
 #else
@@ -573,7 +600,8 @@ static void* sSavePromptBgQuadsTexs[] = {
 
 #define EQUIPMENT_TEXS(language) (sEquipPageBgQuadsTexs[(language)])
 #define SELECT_ITEM_TEXS(language) (sItemPageBgQuadsTexs[(language)])
-#define MAP_TEXS(language) (sMapPageBgQuadsTexs[(language)])
+#define MAP_TEXS(language, inDungeon) (sMapPageBgQuadsTexs[(language)])
+#define TO_MAP_LABEL_TEX(language, inDungeon, isMapLabel, texture) (texture)
 #define QUEST_STATUS_TEXS(language) (sQuestPageBgQuadsTexs[(language)])
 #define SAVE_TEXS(language) (sSavePromptBgQuadsTexs[(language)])
 #endif
@@ -1409,7 +1437,8 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
             MATRIX_FINALIZE_AND_LOAD(POLY_OPA_DISP++, gfxCtx, "../z_kaleido_scope_PAL.c", 1243);
 
             POLY_OPA_DISP =
-                KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx, MAP_TEXS(gSaveContext.language));
+                KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx,
+                                              MAP_TEXS(gSaveContext.language, sInDungeonScene));
 
             if (sInDungeonScene) {
                 KaleidoScope_DrawDungeonMap(play, gfxCtx);
@@ -1455,7 +1484,8 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
                 MATRIX_FINALIZE_AND_LOAD(POLY_OPA_DISP++, gfxCtx, "../z_kaleido_scope_PAL.c", 1303);
 
                 POLY_OPA_DISP =
-                    KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx, MAP_TEXS(gSaveContext.language));
+                    KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx,
+                                                  MAP_TEXS(gSaveContext.language, sInDungeonScene));
 
                 if (sInDungeonScene) {
                     KaleidoScope_DrawDungeonMap(play, gfxCtx);
@@ -1948,7 +1978,7 @@ void KaleidoScope_DrawUIOverlay(PlayState* play) {
                 gAreaGsFlags[D_8082AE30[pauseCtx->cursorPoint[PAUSE_WORLD_MAP]]]) {
 
                 // UI_OVERLAY_QUAD_HAVE_ALL_GS
-                pauseCtx->uiOverlayVtx[24].v.ob[0] = pauseCtx->uiOverlayVtx[26].v.ob[0] = -74;
+                pauseCtx->uiOverlayVtx[24].v.ob[0] = pauseCtx->uiOverlayVtx[26].v.ob[0] = -70; // GS Token position overworld map
 
                 pauseCtx->uiOverlayVtx[25].v.ob[0] = pauseCtx->uiOverlayVtx[27].v.ob[0] =
                     pauseCtx->uiOverlayVtx[24].v.ob[0] + 19;
@@ -2029,11 +2059,17 @@ void KaleidoScope_DrawUIOverlay(PlayState* play) {
 
                 if (pauseCtx->cursorSpecialPos == PAUSE_CURSOR_PAGE_LEFT) {
                     POLY_OPA_DISP = KaleidoScope_QuadTextureIA8(
-                        POLY_OPA_DISP, sScrollLeftLabels[pauseCtx->pageIndex][gSaveContext.language],
+                        POLY_OPA_DISP,
+                        TO_MAP_LABEL_TEX(gSaveContext.language, sInDungeonScene,
+                                        pauseCtx->pageIndex == PAUSE_QUEST,
+                                        sScrollLeftLabels[pauseCtx->pageIndex][gSaveContext.language]),
                         TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HEIGHT, 0);
                 } else {
                     POLY_OPA_DISP = KaleidoScope_QuadTextureIA8(
-                        POLY_OPA_DISP, sScrollRightLabels[pauseCtx->pageIndex][gSaveContext.language],
+                        POLY_OPA_DISP,
+                        TO_MAP_LABEL_TEX(gSaveContext.language, sInDungeonScene,
+                                        pauseCtx->pageIndex == PAUSE_ITEM,
+                                        sScrollRightLabels[pauseCtx->pageIndex][gSaveContext.language]),
                         TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HEIGHT, 0);
                 }
             }
@@ -3791,6 +3827,18 @@ void KaleidoScope_Update(PlayState* play) {
                 case SCENE_SPIRIT_TEMPLE_BOSS:
                 case SCENE_SHADOW_TEMPLE_BOSS:
                     sInDungeonScene = true;
+#if OOT_NTSC
+                //    if (gSaveContext.language != LANGUAGE_JPN) {
+                //        DMA_REQUEST_SYNC(sPauseMap10JPNTexBuffer,
+                 //                        (uintptr_t)_icon_item_jpn_staticSegmentRomStart +
+                 //                            SEGMENT_OFFSET(gPauseMap10JPNTex),
+                 //                        sizeof(sPauseMap10JPNTexBuffer), "../z_kaleido_scope_PAL.c", UNK_LINE);
+                 //       DMA_REQUEST_SYNC(sPauseToMapJPNTexBuffer,
+                 //                        (uintptr_t)_icon_item_jpn_staticSegmentRomStart +
+                 //                            SEGMENT_OFFSET(gPauseToMapJPNTex),
+                 //                        sizeof(sPauseToMapJPNTexBuffer), "../z_kaleido_scope_PAL.c", UNK_LINE);
+                 //   }
+#endif
                     size2 = (uintptr_t)_icon_item_dungeon_staticSegmentRomEnd -
                             (uintptr_t)_icon_item_dungeon_staticSegmentRomStart;
                     PRINTF("icon_item_dungeon dungeon-size2=%x\n", size2);

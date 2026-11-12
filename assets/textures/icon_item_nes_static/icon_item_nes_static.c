@@ -60,6 +60,10 @@ u64 gPauseToMapENGTex[TEX_LEN(u64, TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HE
 #include "assets/textures/icon_item_nes_static/gPauseToMapENGTex.ia8.inc.c"
 };
 
+u64 gPauseToDungeonENGTex[TEX_LEN(u64, TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HEIGHT, 8)] = {
+#include "assets/textures/icon_item_nes_static/gPauseToDungeonENGTex.ia8.inc.c"    
+};
+
 u64 gPauseToQuestStatusENGTex[TEX_LEN(u64, TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HEIGHT, 8)] = {
 #include "assets/textures/icon_item_nes_static/gPauseToQuestStatusENGTex.ia8.inc.c"
 };
@@ -108,6 +112,10 @@ u64 gPauseSelectItem20ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_T
 
 u64 gPauseMap10ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)] = {
 #include "assets/textures/icon_item_nes_static/gPauseMap10ENGTex.ia8.inc.c"
+};
+
+u64 gPauseDungeon10ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)] = {
+#include "assets/textures/icon_item_nes_static/gPauseDungeon10ENGTex.ia8.inc.c"
 };
 
 u64 gPauseQuestStatus00ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)] = {

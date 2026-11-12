@@ -42,6 +42,9 @@ extern u64 gPauseToEquipENGTex[TEX_LEN(u64, gPauseToEquipENGTex_WIDTH, gPauseToE
 #define gPauseToDecideENGTex_WIDTH 64
 #define gPauseToDecideENGTex_HEIGHT 16
 extern u64 gPauseToDecideENGTex[TEX_LEN(u64, gPauseToDecideENGTex_WIDTH, gPauseToDecideENGTex_HEIGHT, 8)];
+#define gPauseToDungeonENGTex_WIDTH 128
+#define gPauseToDungeonENGTex_HEIGHT 16
+extern u64 gPauseToDungeonENGTex[TEX_LEN(u64, gPauseToDungeonENGTex_WIDTH, gPauseToDungeonENGTex_HEIGHT, 8)];
 #define gPauseToPlayMelodyENGTex_WIDTH 80
 #define gPauseToPlayMelodyENGTex_HEIGHT 16
 extern u64 gPauseToPlayMelodyENGTex[TEX_LEN(u64, gPauseToPlayMelodyENGTex_WIDTH, gPauseToPlayMelodyENGTex_HEIGHT, 8)];
@@ -74,6 +77,7 @@ extern u64 gPauseSelectItem00ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG
 extern u64 gPauseSelectItem10ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];
 extern u64 gPauseSelectItem20ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];
 extern u64 gPauseMap10ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];
+extern u64 gPauseDungeon10ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];
 extern u64 gPauseQuestStatus00ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];
 extern u64 gPauseQuestStatus10ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];
 extern u64 gPauseQuestStatus20ENGTex[TEX_LEN(u64, PAGE_BG_QUAD_TEX_WIDTH, PAGE_BG_QUAD_TEX_HEIGHT, 8)];

@@ -3989,12 +3989,15 @@ void Interface_Draw(PlayState* play) {
 
             if (((gSaveContext.timerState != TIMER_STATE_OFF) && (gSaveContext.timerState != TIMER_STATE_STOP)) ||
                 (gSaveContext.subTimerState != SUBTIMER_STATE_OFF)) {
-                if ((play->sceneId == SCENE_WINDMILL_AND_DAMPES_GRAVE) &&
-                    (gSaveContext.timerState != TIMER_STATE_OFF)) {
+                if (((play->sceneId == SCENE_WINDMILL_AND_DAMPES_GRAVE) &&
+                     (gSaveContext.timerState != TIMER_STATE_OFF)) ||
+                    (GET_EVENTINF(EVENTINF_MARATHON_ACTIVE) && (gSaveContext.timerState == TIMER_STATE_OFF))) {
                     timerDigitCount = 0;
                     timerDigitPositions = timerDigitLeftPos;
-                    dampeRomanGlyphCount = RomanNumerals_Format(gSaveContext.timerSeconds, dampeRomanGlyphs,
-                                                                ARRAY_COUNT(dampeRomanGlyphs));
+                    dampeRomanGlyphCount =
+                        RomanNumerals_Format((gSaveContext.timerState != TIMER_STATE_OFF) ? gSaveContext.timerSeconds
+                                                                                         : gSaveContext.subTimerSeconds,
+                                             dampeRomanGlyphs, ARRAY_COUNT(dampeRomanGlyphs));
                 } else {
                     dampeRomanGlyphCount = 0;
                     timerDigitCount = 5;
