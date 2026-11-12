@@ -14,7 +14,7 @@
 #include "sequence.h"
 #include "sfx.h"
 #include "sys_matrix.h"
-#include "terminal.h"
+#include "terminal.h" // IWYU pragma: keep
 #include "translation.h"
 #include "versions.h"
 #include "audio.h"
@@ -24,6 +24,7 @@
 #include "play_state.h"
 #include "player.h"
 #include "save.h"
+#include "roman_numerals.h"
 
 #include "assets/textures/parameter_static/parameter_static.h"
 #include "assets/textures/parameter_static/roman_numerals.h"
@@ -2992,9 +2993,24 @@ void Interface_DrawItemIconTexture(PlayState* play, void* texture, s16 button) {
     CLOSE_DISPS(play->state.gfxCtx, "../z_parameter.c", 3094);
 }
 
+#define AMMO_ROMAN_MAX_GLYPHS 8
+
+static void* sAmmoRomanGlyphTextures[] = {
+    gAmmodigitI,
+    gAmmodigitV,
+    gAmmodigitX,
+    gAmmodigitL,
+};
+
+static s16 sAmmoRomanGlyphAdvances[ROMAN_NUMERAL_GLYPH_MAX] = AMMO_ROMAN_GLYPH_ADVANCES;
+
 void Interface_DrawAmmoCount(PlayState* play, s16 button, s16 alpha) {
     s16 i;
     s16 ammo;
+    u8 ammoRomanGlyphs[AMMO_ROMAN_MAX_GLYPHS];
+    s16 ammoRomanGlyphCount;
+    s16 glyphIndex;
+    s16 glyphX;
 
     OPEN_DISPS(play->state.gfxCtx, "../z_parameter.c", 3105);
 
@@ -3034,19 +3050,15 @@ void Interface_DrawAmmoCount(PlayState* play, s16 button, s16 alpha) {
             gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 100, 100, 100, alpha);
         }
 
-        i = 0;
-        while (ammo >= 10) {
-            i++;
-            ammo -= 10;
-        }
+        ammoRomanGlyphCount =
+            (ammo <= 50) ? RomanNumerals_Format(ammo, ammoRomanGlyphs, ARRAY_COUNT(ammoRomanGlyphs)) : 0;
 
-        if (i != 0) {
-            OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, ((u8*)gAmmoDigit0Tex + ((8 * 8) * i)), 8, 8,
-                                          R_ITEM_AMMO_X(button), R_ITEM_AMMO_Y(button), 8, 8, 1 << 10, 1 << 10);
+        glyphX = R_ITEM_AMMO_X(button);
+        for (glyphIndex = 0; glyphIndex < ammoRomanGlyphCount; glyphIndex++) {
+            OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, sAmmoRomanGlyphTextures[ammoRomanGlyphs[glyphIndex]], 8, 8,
+                                          glyphX, R_ITEM_AMMO_Y(button), 8, 8, 1 << 10, 1 << 10);
+            glyphX += sAmmoRomanGlyphAdvances[ammoRomanGlyphs[glyphIndex]];
         }
-
-        OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, ((u8*)gAmmoDigit0Tex + ((8 * 8) * ammo)), 8, 8,
-                                      R_ITEM_AMMO_X(button) + 6, R_ITEM_AMMO_Y(button), 8, 8, 1 << 10, 1 << 10);
     }
 
     CLOSE_DISPS(play->state.gfxCtx, "../z_parameter.c", 3158);
@@ -3206,34 +3218,14 @@ extern u64 gRupeeRomanDTex[TEX_LEN(u64, gRupeeRomanDTex_WIDTH, gRupeeRomanDTex_H
 extern u64 gRupeeRomanMTex[TEX_LEN(u64, gRupeeRomanMTex_WIDTH, gRupeeRomanMTex_HEIGHT, 8)];
 
 #endif
-typedef enum RupeeRomanGlyph {
-    RUPEE_ROMAN_GLYPH_I,
-    RUPEE_ROMAN_GLYPH_V,
-    RUPEE_ROMAN_GLYPH_X,
-    RUPEE_ROMAN_GLYPH_L,
-    RUPEE_ROMAN_GLYPH_C,
-    RUPEE_ROMAN_GLYPH_D,
-    RUPEE_ROMAN_GLYPH_M,
-    RUPEE_ROMAN_GLYPH_MAX
-} RupeeRomanGlyph;
-
-typedef struct RupeeRomanToken {
-    /* 0x00 */ s16 value;
-    /* 0x02 */ u8 firstGlyph;
-    /* 0x03 */ u8 secondGlyph;
-} RupeeRomanToken; // size = 0x4
-
-#define RUPEE_ROMAN_GLYPH_NONE 0xFF
-#define RUPEE_ROMAN_MAX_GLYPHS 16
-
-static void* sRupeeRomanGlyphTextures[RUPEE_ROMAN_GLYPH_MAX] = {
+static void* sRupeeRomanGlyphTextures[ROMAN_NUMERAL_GLYPH_MAX] = {
     gRupeeRomanITex, gRupeeRomanVTex, gRupeeRomanXTex, gRupeeRomanLTex,
     gRupeeRomanCTex, gRupeeRomanDTex, gRupeeRomanMTex,
 };
 
-static s16 sRupeeRomanGlyphAdvances[RUPEE_ROMAN_GLYPH_MAX] = { 5, 10, 9, 8, 12, 11, 8 };
+static s16 sRupeeRomanGlyphAdvances[ROMAN_NUMERAL_GLYPH_MAX] = { 5, 10, 9, 8, 12, 11, 8 };
 // This function sets the distance for the next glyph based on each character.
-static s16 sRupeeRomanGlyphWidths[RUPEE_ROMAN_GLYPH_MAX] = {
+static s16 sRupeeRomanGlyphWidths[ROMAN_NUMERAL_GLYPH_MAX] = {
     8,  // I
     12, // V
     12, // X
@@ -3242,7 +3234,7 @@ static s16 sRupeeRomanGlyphWidths[RUPEE_ROMAN_GLYPH_MAX] = {
     12, // D
     8,  // M
 };
-static s16 sRupeeRomanGlyphTextureWidths[RUPEE_ROMAN_GLYPH_MAX] = {
+static s16 sRupeeRomanGlyphTextureWidths[ROMAN_NUMERAL_GLYPH_MAX] = {
     8,  // I
     16, // V
     16, // X
@@ -3251,47 +3243,6 @@ static s16 sRupeeRomanGlyphTextureWidths[RUPEE_ROMAN_GLYPH_MAX] = {
     16, // D
     8,  // M
 };
-static s32 Interface_FormatRupeesRoman(s16 rupees, u8* glyphs, s32 glyphCapacity) {
-    static RupeeRomanToken sTokens[] = {
-        { 1000, RUPEE_ROMAN_GLYPH_M, RUPEE_ROMAN_GLYPH_NONE }, { 900, RUPEE_ROMAN_GLYPH_C, RUPEE_ROMAN_GLYPH_M },
-        { 500, RUPEE_ROMAN_GLYPH_D, RUPEE_ROMAN_GLYPH_NONE },  { 400, RUPEE_ROMAN_GLYPH_C, RUPEE_ROMAN_GLYPH_D },
-        { 100, RUPEE_ROMAN_GLYPH_C, RUPEE_ROMAN_GLYPH_NONE },  { 90, RUPEE_ROMAN_GLYPH_X, RUPEE_ROMAN_GLYPH_C },
-        { 50, RUPEE_ROMAN_GLYPH_L, RUPEE_ROMAN_GLYPH_NONE },   { 40, RUPEE_ROMAN_GLYPH_X, RUPEE_ROMAN_GLYPH_L },
-        { 10, RUPEE_ROMAN_GLYPH_X, RUPEE_ROMAN_GLYPH_NONE },   { 9, RUPEE_ROMAN_GLYPH_I, RUPEE_ROMAN_GLYPH_X },
-        { 5, RUPEE_ROMAN_GLYPH_V, RUPEE_ROMAN_GLYPH_NONE },    { 4, RUPEE_ROMAN_GLYPH_I, RUPEE_ROMAN_GLYPH_V },
-        { 1, RUPEE_ROMAN_GLYPH_I, RUPEE_ROMAN_GLYPH_NONE },
-    };
-    s32 glyphCount = 0;
-    s32 tokenIndex;
-    s32 tokenGlyphCount;
-
-    if (glyphCapacity <= 0) {
-        return 0;
-    }
-
-    if (rupees <= 0) {
-        return 0;
-    }
-
-    for (tokenIndex = 0; tokenIndex < ARRAY_COUNT(sTokens); tokenIndex++) {
-        tokenGlyphCount = sTokens[tokenIndex].secondGlyph == RUPEE_ROMAN_GLYPH_NONE ? 1 : 2;
-
-        while (rupees >= sTokens[tokenIndex].value) {
-            if ((glyphCount + tokenGlyphCount) > glyphCapacity) {
-                return glyphCount;
-            }
-
-            glyphs[glyphCount++] = sTokens[tokenIndex].firstGlyph;
-            if (tokenGlyphCount == 2) {
-                glyphs[glyphCount++] = sTokens[tokenIndex].secondGlyph;
-            }
-            rupees -= sTokens[tokenIndex].value;
-        }
-    }
-
-    return glyphCount;
-}
-
 void Interface_Draw(PlayState* play) {
     static s16 magicArrowEffectsR[] = { 255, 100, 255 };
     static s16 magicArrowEffectsG[] = { 0, 100, 255 };
@@ -3310,17 +3261,24 @@ void Interface_Draw(PlayState* play) {
     static s16 sSubTimerNextSecondTimer;
     static s16 sSubTimerStateTimer;
     static s16 sTimerDigits[5];
+    u8 dampeRomanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
     PauseContext* pauseCtx = &play->pauseCtx;
     MessageContext* msgCtx = &play->msgCtx;
     Player* player = GET_PLAYER(play);
-    u8 rupeeRomanGlyphs[RUPEE_ROMAN_MAX_GLYPHS];
+    u8 rupeeRomanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+    u8 hbaRomanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
     s16 rupeeRomanGlyphCount;
+    s16 hbaRomanGlyphCount;
     s16 svar1;
     s16 svar2;
     s16 svar3;
     s16 svar5;
     s16 timerId;
+    s16 timerDigitCount;
+    s16* timerDigitPositions;
+    s16 dampeRomanGlyphCount;
+    s16 dampeRomanGlyphX;
 
     OPEN_DISPS(play->state.gfxCtx, "../z_parameter.c", 3405);
 
@@ -3371,11 +3329,11 @@ void Interface_Draw(PlayState* play) {
                                       TEXEL0, 0, PRIMITIVE, 0);
 
                     rupeeRomanGlyphCount =
-                        Interface_FormatRupeesRoman(gSaveContext.save.info.inventory.dungeonKeys[gSaveContext.mapIndex],
-                                                    rupeeRomanGlyphs, ARRAY_COUNT(rupeeRomanGlyphs));
+                        RomanNumerals_Format(gSaveContext.save.info.inventory.dungeonKeys[gSaveContext.mapIndex],
+                                             rupeeRomanGlyphs, ARRAY_COUNT(rupeeRomanGlyphs));
 
                     for (svar1 = 0, svar3 = 42; svar1 < rupeeRomanGlyphCount; svar1++) {
-                        RupeeRomanGlyph glyph = rupeeRomanGlyphs[svar1];
+                        RomanNumeralGlyph glyph = rupeeRomanGlyphs[svar1];
                         s16 glyphWidth = sRupeeRomanGlyphWidths[glyph];
                         s16 glyphTextureWidth = sRupeeRomanGlyphTextureWidths[glyph];
                         OVERLAY_DISP = Gfx_TextureI8(OVERLAY_DISP, sRupeeRomanGlyphTextures[glyph], glyphTextureWidth,
@@ -3402,11 +3360,11 @@ void Interface_Draw(PlayState* play) {
         gDPSetCombineLERP(OVERLAY_DISP++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, PRIMITIVE, TEXEL0, 0,
                           PRIMITIVE, 0);
 
-        rupeeRomanGlyphCount = Interface_FormatRupeesRoman(gSaveContext.save.info.playerData.rupees, rupeeRomanGlyphs,
-                                                           ARRAY_COUNT(rupeeRomanGlyphs));
+        rupeeRomanGlyphCount = RomanNumerals_Format(gSaveContext.save.info.playerData.rupees, rupeeRomanGlyphs,
+                                                    ARRAY_COUNT(rupeeRomanGlyphs));
 
         for (svar1 = 0, svar3 = 42; svar1 < rupeeRomanGlyphCount; svar1++) {
-            RupeeRomanGlyph glyph = rupeeRomanGlyphs[svar1];
+            RomanNumeralGlyph glyph = rupeeRomanGlyphs[svar1];
             s16 glyphWidth = sRupeeRomanGlyphWidths[glyph];
             s16 glyphTextureWidth = sRupeeRomanGlyphTextureWidths[glyph];
             OVERLAY_DISP = Gfx_TextureI8(OVERLAY_DISP, sRupeeRomanGlyphTextures[glyph], glyphTextureWidth, 16, svar3,
@@ -3626,16 +3584,16 @@ void Interface_Draw(PlayState* play) {
                 gDPSetCombineLERP(OVERLAY_DISP++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, PRIMITIVE,
                                   TEXEL0, 0, PRIMITIVE, 0);
 
-                svar5 = WREG(32) + 6 * 9;
+                hbaRomanGlyphCount =
+                    RomanNumerals_Format(gSaveContext.minigameScore, hbaRomanGlyphs, ARRAY_COUNT(hbaRomanGlyphs));
 
-                for (svar1 = svar2 = 0; svar1 < 4; svar1++) {
-                    if (sHBAScoreDigits[svar1] != 0 || (svar2 != 0) || (svar1 >= 3)) {
-                        OVERLAY_DISP = Gfx_TextureI8(
-                            OVERLAY_DISP, ((u8*)gCounterDigit0Tex + (8 * 16 * sHBAScoreDigits[svar1])), 8, 16, svar5,
-                            (ZREG(15) - 2), sDigitWidths[0], VREG(42), VREG(43) << 1, VREG(43) << 1);
-                        svar5 += 9;
-                        svar2++;
-                    }
+                for (svar1 = 0, svar5 = WREG(32) + 6 * 9; svar1 < hbaRomanGlyphCount; svar1++) {
+                    RomanNumeralGlyph glyph = hbaRomanGlyphs[svar1];
+                    s16 glyphWidth = sRupeeRomanGlyphWidths[glyph];
+                    s16 glyphTextureWidth = sRupeeRomanGlyphTextureWidths[glyph];
+                    OVERLAY_DISP = Gfx_TextureI8(OVERLAY_DISP, sRupeeRomanGlyphTextures[glyph], glyphTextureWidth, 16,
+                                                 svar5, (ZREG(15) - 2), glyphWidth, 16, 1 << 10, 1 << 10);
+                    svar5 += sRupeeRomanGlyphAdvances[glyph];
                 }
 
                 gDPPipeSync(OVERLAY_DISP++);
@@ -4031,27 +3989,41 @@ void Interface_Draw(PlayState* play) {
 
             if (((gSaveContext.timerState != TIMER_STATE_OFF) && (gSaveContext.timerState != TIMER_STATE_STOP)) ||
                 (gSaveContext.subTimerState != SUBTIMER_STATE_OFF)) {
-                sTimerDigits[0] = sTimerDigits[1] = sTimerDigits[3] = 0;
-                sTimerDigits[2] = 10; // digit 10 is used as ':' (colon)
-
-                if (gSaveContext.timerState != TIMER_STATE_OFF) {
-                    sTimerDigits[4] = gSaveContext.timerSeconds;
+                if (((play->sceneId == SCENE_WINDMILL_AND_DAMPES_GRAVE) &&
+                     (gSaveContext.timerState != TIMER_STATE_OFF)) ||
+                    (GET_EVENTINF(EVENTINF_MARATHON_ACTIVE) && (gSaveContext.timerState == TIMER_STATE_OFF))) {
+                    timerDigitCount = 0;
+                    timerDigitPositions = timerDigitLeftPos;
+                    dampeRomanGlyphCount =
+                        RomanNumerals_Format((gSaveContext.timerState != TIMER_STATE_OFF) ? gSaveContext.timerSeconds
+                                                                                         : gSaveContext.subTimerSeconds,
+                                             dampeRomanGlyphs, ARRAY_COUNT(dampeRomanGlyphs));
                 } else {
-                    sTimerDigits[4] = gSaveContext.subTimerSeconds;
-                }
+                    dampeRomanGlyphCount = 0;
+                    timerDigitCount = 5;
+                    timerDigitPositions = timerDigitLeftPos;
+                    sTimerDigits[0] = sTimerDigits[1] = sTimerDigits[3] = 0;
+                    sTimerDigits[2] = 10; // digit 10 is used as ':' (colon)
 
-                while (sTimerDigits[4] >= 60) {
-                    sTimerDigits[1]++;
-                    if (sTimerDigits[1] >= 10) {
-                        sTimerDigits[0]++;
-                        sTimerDigits[1] -= 10;
+                    if (gSaveContext.timerState != TIMER_STATE_OFF) {
+                        sTimerDigits[4] = gSaveContext.timerSeconds;
+                    } else {
+                        sTimerDigits[4] = gSaveContext.subTimerSeconds;
                     }
-                    sTimerDigits[4] -= 60;
-                }
 
-                while (sTimerDigits[4] >= 10) {
-                    sTimerDigits[3]++;
-                    sTimerDigits[4] -= 10;
+                    while (sTimerDigits[4] >= 60) {
+                        sTimerDigits[1]++;
+                        if (sTimerDigits[1] >= 10) {
+                            sTimerDigits[0]++;
+                            sTimerDigits[1] -= 10;
+                        }
+                        sTimerDigits[4] -= 60;
+                    }
+
+                    while (sTimerDigits[4] >= 10) {
+                        sTimerDigits[3]++;
+                        sTimerDigits[4] -= 10;
+                    }
                 }
 
                 // Clock Icon
@@ -4083,12 +4055,24 @@ void Interface_Draw(PlayState* play) {
                     }
                 }
 
-                for (svar1 = 0; svar1 < ARRAY_COUNT(sTimerDigits); svar1++) {
-                    OVERLAY_DISP =
-                        Gfx_TextureI8(OVERLAY_DISP, ((u8*)gCounterDigit0Tex + (8 * 16 * sTimerDigits[svar1])), 8, 16,
-                                      ((void)0, gSaveContext.timerX[timerId]) + timerDigitLeftPos[svar1],
-                                      ((void)0, gSaveContext.timerY[timerId]), sDigitWidths[svar1], VREG(42),
-                                      VREG(43) << 1, VREG(43) << 1);
+                if (dampeRomanGlyphCount != 0) {
+                    for (svar1 = 0, dampeRomanGlyphX = gSaveContext.timerX[timerId] + 42; svar1 < dampeRomanGlyphCount;
+                         svar1++) {
+                        RomanNumeralGlyph glyph = dampeRomanGlyphs[svar1];
+                        OVERLAY_DISP = Gfx_TextureI8(OVERLAY_DISP, sRupeeRomanGlyphTextures[glyph],
+                                                     sRupeeRomanGlyphTextureWidths[glyph], 16, dampeRomanGlyphX,
+                                                     gSaveContext.timerY[timerId], sRupeeRomanGlyphWidths[glyph],
+                                                     VREG(42), VREG(43) << 1, VREG(43) << 1);
+                        dampeRomanGlyphX += sRupeeRomanGlyphAdvances[glyph];
+                    }
+                } else {
+                    for (svar1 = 0; svar1 < timerDigitCount; svar1++) {
+                        OVERLAY_DISP =
+                            Gfx_TextureI8(OVERLAY_DISP, ((u8*)gCounterDigit0Tex + (8 * 16 * sTimerDigits[svar1])), 8,
+                                          16, ((void)0, gSaveContext.timerX[timerId]) + timerDigitPositions[svar1],
+                                          ((void)0, gSaveContext.timerY[timerId]), sDigitWidths[svar1], VREG(42),
+                                          VREG(43) << 1, VREG(43) << 1);
+                    }
                 }
             }
         }

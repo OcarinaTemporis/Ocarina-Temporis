@@ -22,6 +22,7 @@
 #include "ocarina.h"
 #include "play_state.h"
 #include "player.h"
+#include "roman_numerals.h"
 #include "save.h"
 
 #include "assets/textures/parameter_static/parameter_static.h"
@@ -2219,128 +2220,161 @@ void Message_Decode(PlayState* play) {
                     decodedBufPos++;
                 }
                 decodedBufPos--;
-            } else if (curChar == MESSAGE_MARATHON_TIME || curChar == MESSAGE_RACE_TIME) {
+            } else if (curChar == MESSAGE_RACE_TIME) {
+                // Convert the race timer to Roman numeral glyphs and add them to the decoded buffer.
+                u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+                s32 romanGlyphCount;
+                static const u8 sRomanNumeralGlyphChars[ROMAN_NUMERAL_GLYPH_MAX] = {
+                    'I', 'V', 'X', 'L', 'C', 'D', 'M',
+                };
+
+                romanGlyphCount =
+                    RomanNumerals_Format(gSaveContext.timerSeconds, romanGlyphs, ARRAY_COUNT(romanGlyphs));
+
+                for (i = 0; i < romanGlyphCount; i++) {
+                    u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                    Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                    charTexIdx += FONT_CHAR_TEX_SIZE;
+                    MSG_BUF_DECODED[decodedBufPos] = romanChar;
+                    decodedBufPos++;
+                }
+                decodedBufPos--;
+            } else if (curChar == MESSAGE_MARATHON_TIME) {
+                u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+                s32 romanGlyphCount;
+                static const u8 sRomanNumeralGlyphChars[ROMAN_NUMERAL_GLYPH_MAX] = {
+                    'I', 'V', 'X', 'L', 'C', 'D', 'M',
+                };
+
+                romanGlyphCount =
+                    RomanNumerals_Format(gSaveContext.subTimerSeconds, romanGlyphs, ARRAY_COUNT(romanGlyphs));
+
+                for (i = 0; i < romanGlyphCount; i++) {
+                    u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                    Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                    charTexIdx += FONT_CHAR_TEX_SIZE;
+                    MSG_BUF_DECODED[decodedBufPos] = romanChar;
+                    decodedBufPos++;
+                }
+                decodedBufPos--;
+
                 // Convert the values of the appropriate timer to digits and add the
                 //  digits to the decoded buffer in place of the control character.
-                PRINTF(T("\nＥＶＥＮＴタイマー ＝ ", "\nEVENT timer = "));
-                digits[0] = digits[1] = digits[2] = 0;
-                if (curChar == MESSAGE_RACE_TIME) {
-                    digits[3] = gSaveContext.timerSeconds;
-                } else {
-                    digits[3] = gSaveContext.subTimerSeconds;
-                }
+                // PRINTF(T("\nＥＶＥＮＴタイマー ＝ ", "\nEVENT timer = "));
+                // digits[0] = digits[1] = digits[2] = 0;
+                // if (curChar == MESSAGE_RACE_TIME) {
+                //    digits[3] = gSaveContext.timerSeconds;
+                //} else {
+                //    digits[3] = gSaveContext.subTimerSeconds;
+                //}
 
-                while (digits[3] >= 60) {
-                    digits[1]++;
-                    if (digits[1] >= 10) {
-                        digits[0]++;
-                        digits[1] -= 10;
-                    }
-                    digits[3] -= 60;
-                }
-                while (digits[3] >= 10) {
-                    digits[2]++;
-                    digits[3] -= 10;
-                }
+                // while (digits[3] >= 60) {
+                //     digits[1]++;
+                //     if (digits[1] >= 10) {
+                //         digits[0]++;
+                //         digits[1] -= 10;
+                //     }
+                //     digits[3] -= 60;
+                // }
+                // while (digits[3] >= 10) {
+                //     digits[2]++;
+                //     digits[3] -= 10;
+                // }
 
-                for (i = 0; i < 4; i++) {
-                    Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
-                    charTexIdx += FONT_CHAR_TEX_SIZE;
-                    MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
-                    decodedBufPos++;
-                    if (i == 1) {
-                        Font_LoadChar(font, '"' - ' ', charTexIdx);
-                        charTexIdx += FONT_CHAR_TEX_SIZE;
-                        MSG_BUF_DECODED[decodedBufPos] = '"';
-                        decodedBufPos++;
-                    } else if (i == 3) {
-                        Font_LoadChar(font, '"' - ' ', charTexIdx);
-                        charTexIdx += FONT_CHAR_TEX_SIZE;
-                        MSG_BUF_DECODED[decodedBufPos] = '"';
-                    }
-                }
+                // for (i = 0; i < 4; i++) {
+                //     Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
+                //     charTexIdx += FONT_CHAR_TEX_SIZE;
+                //    MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
+                //     decodedBufPos++;
+                //     if (i == 1) {
+                //         Font_LoadChar(font, '"' - ' ', charTexIdx);
+                //        charTexIdx += FONT_CHAR_TEX_SIZE;
+                //        MSG_BUF_DECODED[decodedBufPos] = '"';
+                //        decodedBufPos++;
+                //    } else if (i == 3) {
+                //        Font_LoadChar(font, '"' - ' ', charTexIdx);
+                //        charTexIdx += FONT_CHAR_TEX_SIZE;
+                //        MSG_BUF_DECODED[decodedBufPos] = '"';
+                //   }
+                // }
             } else if (curChar == MESSAGE_POINTS) {
                 // Convert the values of the current minigame score to digits and
                 //  add the digits to the decoded buffer in place of the control character.
-                PRINTF(T("\n流鏑馬スコア ＝ %d\n", "\nHorseback archery score = %d\n"), gSaveContext.minigameScore);
-                digits[0] = digits[1] = digits[2] = 0;
-                digits[3] = gSaveContext.minigameScore;
+                u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+                s32 romanGlyphCount;
+                static const u8 sRomanNumeralGlyphChars[ROMAN_NUMERAL_GLYPH_MAX] = {
+                    'I', 'V', 'X', 'L', 'C', 'D', 'M',
+                };
 
-                while (digits[3] >= 1000) {
-                    digits[0]++;
-                    digits[3] -= 1000;
-                }
-                while (digits[3] >= 100) {
-                    digits[1]++;
-                    digits[3] -= 100;
-                }
-                while (digits[3] >= 10) {
-                    digits[2]++;
-                    digits[3] -= 10;
-                }
+                romanGlyphCount =
+                    RomanNumerals_Format(gSaveContext.minigameScore, romanGlyphs, ARRAY_COUNT(romanGlyphs));
 
-                loadChar = false;
-                for (i = 0; i < 4; i++) {
-                    if (i == 3 || digits[i] != 0) {
-                        loadChar = true;
-                    }
-                    if (loadChar) {
-                        Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
-                        MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
-                        charTexIdx += FONT_CHAR_TEX_SIZE;
-                        decodedBufPos++;
-                    }
+                for (i = 0; i < romanGlyphCount; i++) {
+                    u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                    Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                    charTexIdx += FONT_CHAR_TEX_SIZE;
+                    MSG_BUF_DECODED[decodedBufPos] = romanChar;
+                    decodedBufPos++;
                 }
                 decodedBufPos--;
             } else if (curChar == MESSAGE_TOKENS) {
-                // Convert the current number of collected gold skulltula tokens to digits and
-                //  add the digits to the decoded buffer in place of the control character.
+                // Convert the current number of collected gold skulltula tokens to Roman numerals
+                // and write them to the decoded buffer in place of the control character.
+                u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+                s32 romanGlyphCount;
+                static const u8 sRomanNumeralGlyphChars[ROMAN_NUMERAL_GLYPH_MAX] = {
+                    'I', 'V', 'X', 'L', 'C', 'D', 'M',
+                };
+
                 PRINTF(T("\n金スタ合計数 ＝ %d", "\nTotal number of gold skulls = %d"),
                        gSaveContext.save.info.inventory.gsTokens);
-                digits[0] = digits[1] = 0;
-                digits[2] = gSaveContext.save.info.inventory.gsTokens;
 
-                while (digits[2] >= 100) {
-                    digits[0]++;
-                    digits[2] -= 100;
-                }
-                while (digits[2] >= 10) {
-                    digits[1]++;
-                    digits[2] -= 10;
-                }
+                if (gSaveContext.save.info.inventory.gsTokens == 0) {
+                    static const u8 sZeroTokens[] = "nullae";
 
-                loadChar = false;
-                for (i = 0; i < 3; i++) {
-                    if (i == 2 || digits[i] != 0) {
-                        loadChar = true;
-                    }
-                    if (loadChar) {
-                        Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
+                    for (i = 0; sZeroTokens[i] != '\0'; i++) {
+                        Font_LoadChar(font, sZeroTokens[i] - ' ', charTexIdx);
                         charTexIdx += FONT_CHAR_TEX_SIZE;
-                        MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
-                        PRINTF("%x(%x) ", digits[i] + '0' - ' ', digits[i]);
+                        MSG_BUF_DECODED[decodedBufPos] = sZeroTokens[i];
+                        decodedBufPos++;
+                    }
+                } else {
+                    romanGlyphCount = RomanNumerals_Format(gSaveContext.save.info.inventory.gsTokens, romanGlyphs,
+                                                           ARRAY_COUNT(romanGlyphs));
+
+                    for (i = 0; i < romanGlyphCount; i++) {
+                        u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                        Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = romanChar;
                         decodedBufPos++;
                     }
                 }
                 decodedBufPos--;
             } else if (curChar == MESSAGE_FISH_INFO) {
+                // Convert the fishing hole fish size to Roman numerals and write them to the decoded buffer.
+                u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+                s32 romanGlyphCount;
+                static const u8 sRomanNumeralGlyphChars[ROMAN_NUMERAL_GLYPH_MAX] = {
+                    'I', 'V', 'X', 'L', 'C', 'D', 'M',
+                };
+
                 PRINTF(T("\n釣り堀魚サイズ ＝ ", "\nFishing hole fish size = "));
-                digits[0] = 0;
-                digits[1] = gSaveContext.minigameScore;
 
-                while (digits[1] >= 10) {
-                    digits[0]++;
-                    digits[1] -= 10;
-                }
+                romanGlyphCount =
+                    RomanNumerals_Format(gSaveContext.minigameScore, romanGlyphs, ARRAY_COUNT(romanGlyphs));
 
-                for (i = 0; i < 2; i++) {
-                    if (i == 1 || digits[i] != 0) {
-                        Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
-                        charTexIdx += FONT_CHAR_TEX_SIZE;
-                        MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
-                        PRINTF("%x(%x) ", digits[i] + '0' - ' ', digits[i]);
-                        decodedBufPos++;
-                    }
+                for (i = 0; i < romanGlyphCount; i++) {
+                    u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                    Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                    charTexIdx += FONT_CHAR_TEX_SIZE;
+                    MSG_BUF_DECODED[decodedBufPos] = romanChar;
+                    decodedBufPos++;
                 }
                 decodedBufPos--;
             } else if (curChar == MESSAGE_HIGHSCORE) {
@@ -2371,40 +2405,45 @@ void Message_Decode(PlayState* play) {
                     case HS_HBA:
                     case HS_POE_POINTS:
                     case HS_FISHING:
-                        digits[0] = digits[1] = digits[2] = 0;
-                        digits[3] = value;
+                    case HS_HORSE_RACE:
+                    case HS_MARATHON: {
+                        u8 romanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+                        s32 romanGlyphCount;
+                        static const u8 sRomanNumeralGlyphChars[ROMAN_NUMERAL_GLYPH_MAX] = {
+                            'I', 'V', 'X', 'L', 'C', 'D', 'M',
+                        };
 
-                        while (digits[3] >= 1000) {
-                            digits[0]++;
-                            digits[3] -= 1000;
-                        }
-                        while (digits[3] >= 100) {
-                            digits[1]++;
-                            digits[3] -= 100;
-                        }
-                        while (digits[3] >= 10) {
-                            digits[2]++;
-                            digits[3] -= 10;
-                        }
+                        if ((value == 0) &&
+                            (((MSG_BUF[msgCtx->msgBufPos] & 0xFF) == HS_FISHING) ||
+                             ((MSG_BUF[msgCtx->msgBufPos] & 0xFF) == HS_HBA))) {
+                            static const u8 sFishingZero[] = "nullae";
+                            static const u8 sHbaZero[] = "nulla";
+                            const u8* zeroText =
+                                ((MSG_BUF[msgCtx->msgBufPos] & 0xFF) == HS_HBA) ? sHbaZero : sFishingZero;
 
-                        loadChar = false;
-                        for (i = 0; i < 4; i++) {
-                            if (i == 3 || digits[i] != 0) {
-                                loadChar = true;
-                            }
-                            if (loadChar) {
-                                Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
-                                MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
+                            for (i = 0; zeroText[i] != '\0'; i++) {
+                                Font_LoadChar(font, zeroText[i] - ' ', charTexIdx);
                                 charTexIdx += FONT_CHAR_TEX_SIZE;
+                                MSG_BUF_DECODED[decodedBufPos] = zeroText[i];
+                                decodedBufPos++;
+                            }
+                        } else {
+                            romanGlyphCount = RomanNumerals_Format(value, romanGlyphs, ARRAY_COUNT(romanGlyphs));
+
+                            for (i = 0; i < romanGlyphCount; i++) {
+                                u8 romanChar = sRomanNumeralGlyphChars[romanGlyphs[i]];
+
+                                Font_LoadChar(font, romanChar - ' ', charTexIdx);
+                                charTexIdx += FONT_CHAR_TEX_SIZE;
+                                MSG_BUF_DECODED[decodedBufPos] = romanChar;
                                 decodedBufPos++;
                             }
                         }
                         decodedBufPos--;
                         break;
+                    }
                     case HS_UNK_05:
                         break;
-                    case HS_HORSE_RACE:
-                    case HS_MARATHON:
                     case HS_DAMPE_RACE:
                         digits[0] = digits[1] = digits[2] = 0;
                         digits[3] = value;
@@ -2441,33 +2480,335 @@ void Message_Decode(PlayState* play) {
                         break;
                 }
             } else if (curChar == MESSAGE_TIME) {
-                PRINTF(T("\nゼルダ時間 ＝ ", "\nZelda time = "));
-                digits[0] = 0;
-                digits[1] = (gSaveContext.save.dayTime * (24.0f * 60.0f / 0x10000)) / 60.0f;
-                while (digits[1] >= 10) {
-                    digits[0]++;
-                    digits[1] -= 10;
-                }
-                digits[2] = 0;
-                digits[3] = (s16)(gSaveContext.save.dayTime * (24.0f * 60.0f / 0x10000)) % 60;
-                while (digits[3] >= 10) {
-                    digits[2]++;
-                    digits[3] -= 10;
-                }
+                if (gSaveContext.save.dayTime >= CLOCK_TIME(6, 30) && gSaveContext.save.dayTime <= CLOCK_TIME(7, 28)) {
+                    static const char primaText[] = "prima";
 
-                for (i = 0; i < 4; i++) {
-                    Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
-                    charTexIdx += FONT_CHAR_TEX_SIZE;
-                    MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
-                    decodedBufPos++;
-                    if (i == 1) {
-                        Font_LoadChar(font, ':' - ' ', charTexIdx);
+                    for (i = 0; primaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, primaText[i] - ' ', charTexIdx);
                         charTexIdx += FONT_CHAR_TEX_SIZE;
-                        MSG_BUF_DECODED[decodedBufPos] = ':';
+                        MSG_BUF_DECODED[decodedBufPos] = primaText[i];
                         decodedBufPos++;
                     }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(7, 28) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(8, 25)) {
+                    static const char secundaText[] = "secunda";
+
+                    for (i = 0; secundaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, secundaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = secundaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(8, 25) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(9, 23)) {
+                    static const char tertiaText[] = "tertia";
+
+                    for (i = 0; tertiaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, tertiaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = tertiaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(9, 23) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(10, 20)) {
+                    static const char quartaText[] = "quarta";
+
+                    for (i = 0; quartaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, quartaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = quartaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(10, 20) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(11, 18)) {
+                    static const char quintaText[] = "quinta";
+
+                    for (i = 0; quintaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, quintaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = quintaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(11, 18) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(12, 15)) {
+                    static const char sextaText[] = "sexta";
+
+                    for (i = 0; sextaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, sextaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = sextaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(12, 15) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(13, 13)) {
+                    static const char septimaText[] = "septima";
+
+                    for (i = 0; septimaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, septimaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = septimaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(13, 13) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(14, 10)) {
+                    static const char octavaText[] = "octava";
+
+                    for (i = 0; octavaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, octavaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = octavaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(14, 10) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(15, 8)) {
+                    static const char nonaText[] = "nona";
+
+                    for (i = 0; nonaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, nonaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = nonaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(15, 8) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(16, 5)) {
+                    static const char decimaText[] = "decima";
+
+                    for (i = 0; decimaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, decimaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = decimaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(16, 5) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(17, 3)) {
+                    static const char undecimaText[] = "undecima";
+
+                    for (i = 0; undecimaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, undecimaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = undecimaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(17, 3) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(18, 0)) {
+                    static const char duodecimaText[] = "duodecima";
+
+                    for (i = 0; duodecimaText[i] != '\0'; i++) {
+                        Font_LoadChar(font, duodecimaText[i] - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = duodecimaText[i];
+                        decodedBufPos++;
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(18, 0) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(19, 3)) {
+                    static const char primanocText[] = "prima noctis";
+
+                    for (i = 0; primanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = primanocText[i];
+                        decodedBufPos++;
+                        if (primanocText[i] != ' ') {
+                            Font_LoadChar(font, primanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(19, 3) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(20, 5)) {
+                    static const char secundanocText[] = "secunda noctis";
+
+                    for (i = 0; secundanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = secundanocText[i];
+                        decodedBufPos++;
+                        if (secundanocText[i] != ' ') {
+                            Font_LoadChar(font, secundanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(20, 5) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(21, 8)) {
+                    static const char tertianocText[] = "tertia noctis";
+
+                    for (i = 0; tertianocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = tertianocText[i];
+                        decodedBufPos++;
+                        if (tertianocText[i] != ' ') {
+                            Font_LoadChar(font, tertianocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(21, 8) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(22, 10)) {
+                    static const char quartanocText[] = "quarta noctis";
+
+                    for (i = 0; quartanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = quartanocText[i];
+                        decodedBufPos++;
+                        if (quartanocText[i] != ' ') {
+                            Font_LoadChar(font, quartanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(22, 10) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(23, 13)) {
+                    static const char quintanocText[] = "quinta noctis";
+
+                    for (i = 0; quintanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = quintanocText[i];
+                        decodedBufPos++;
+                        if (quintanocText[i] != ' ') {
+                            Font_LoadChar(font, quintanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(23, 13) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(23, 59)) {
+                    static const char sextanocText[] = "sexta noctis";
+
+                    for (i = 0; sextanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = sextanocText[i];
+                        decodedBufPos++;
+                        if (sextanocText[i] != ' ') {
+                            Font_LoadChar(font, sextanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(0, 0) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(0, 15)) {
+                    static const char sextanocText[] = "sexta noctis";
+
+                    for (i = 0; sextanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = sextanocText[i];
+                        decodedBufPos++;
+                        if (sextanocText[i] != ' ') {
+                            Font_LoadChar(font, sextanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(0, 15) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(1, 18)) {
+                    static const char septimanocText[] = "septima noctis";
+
+                    for (i = 0; septimanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = septimanocText[i];
+                        decodedBufPos++;
+                        if (septimanocText[i] != ' ') {
+                            Font_LoadChar(font, septimanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(1, 18) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(2, 20)) {
+                    static const char octavanocText[] = "octava noctis";
+
+                    for (i = 0; octavanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = octavanocText[i];
+                        decodedBufPos++;
+                        if (octavanocText[i] != ' ') {
+                            Font_LoadChar(font, octavanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(2, 20) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(3, 23)) {
+                    static const char nonanocText[] = "nona noctis";
+
+                    for (i = 0; nonanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = nonanocText[i];
+                        decodedBufPos++;
+                        if (nonanocText[i] != ' ') {
+                            Font_LoadChar(font, nonanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(3, 23) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(4, 25)) {
+                    static const char decimanocText[] = "decima noctis";
+
+                    for (i = 0; decimanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = decimanocText[i];
+                        decodedBufPos++;
+                        if (decimanocText[i] != ' ') {
+                            Font_LoadChar(font, decimanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(4, 25) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(5, 28)) {
+                    static const char undecimanocText[] = "undecima noctis";
+
+                    for (i = 0; undecimanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = undecimanocText[i];
+                        decodedBufPos++;
+                        if (undecimanocText[i] != ' ') {
+                            Font_LoadChar(font, undecimanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else if (gSaveContext.save.dayTime >= CLOCK_TIME(5, 28) &&
+                           gSaveContext.save.dayTime <= CLOCK_TIME(6, 30)) {
+                    static const char duodecimanocText[] = "duodecima noctis";
+
+                    for (i = 0; duodecimanocText[i] != '\0'; i++) {
+                        MSG_BUF_DECODED[decodedBufPos] = duodecimanocText[i];
+                        decodedBufPos++;
+                        if (duodecimanocText[i] != ' ') {
+                            Font_LoadChar(font, duodecimanocText[i] - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                        }
+                    }
+                    decodedBufPos--;
+                } else {
+                    PRINTF(T("\nゼルダ時間 ＝ ", "\nZelda time = "));
+                    digits[0] = 0;
+                    digits[1] = (gSaveContext.save.dayTime * (24.0f * 60.0f / 0x10000)) / 60.0f;
+                    while (digits[1] >= 10) {
+                        digits[0]++;
+                        digits[1] -= 10;
+                    }
+                    digits[2] = 0;
+                    digits[3] = (s16)(gSaveContext.save.dayTime * (24.0f * 60.0f / 0x10000)) % 60;
+                    while (digits[3] >= 10) {
+                        digits[2]++;
+                        digits[3] -= 10;
+                    }
+
+                    for (i = 0; i < 4; i++) {
+                        Font_LoadChar(font, digits[i] + '0' - ' ', charTexIdx);
+                        charTexIdx += FONT_CHAR_TEX_SIZE;
+                        MSG_BUF_DECODED[decodedBufPos] = digits[i] + '0';
+                        decodedBufPos++;
+                        if (i == 1) {
+                            Font_LoadChar(font, ':' - ' ', charTexIdx);
+                            charTexIdx += FONT_CHAR_TEX_SIZE;
+                            MSG_BUF_DECODED[decodedBufPos] = ':';
+                            decodedBufPos++;
+                        }
+                    }
+                    decodedBufPos--;
                 }
-                decodedBufPos--;
             } else if (curChar == MESSAGE_ITEM_ICON) {
                 MSG_BUF_DECODED[++decodedBufPos] = MSG_BUF[msgCtx->msgBufPos + 1];
                 PRINTF("ITEM_NO=(%d) (%d)\n", MSG_BUF_DECODED[decodedBufPos], MSG_BUF[msgCtx->msgBufPos + 1]);

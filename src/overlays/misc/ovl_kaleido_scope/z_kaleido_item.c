@@ -1,4 +1,6 @@
 #include "z_kaleido_scope.h"
+#include "array_count.h"
+#include "roman_numerals.h"
 
 #include "libu64/pad.h"
 #include "controller.h"
@@ -12,6 +14,16 @@
 #include "save.h"
 
 #include "assets/textures/parameter_static/parameter_static.h"
+#include "assets/textures/parameter_static/roman_numerals.h"
+
+static void* sKaleidoAmmoRomanGlyphTextures[] = {
+    gAmmodigitI,
+    gAmmodigitV,
+    gAmmodigitX,
+    gAmmodigitL,
+};
+
+static s16 sKaleidoAmmoRomanGlyphAdvances[ROMAN_NUMERAL_GLYPH_MAX] = AMMO_ROMAN_GLYPH_ADVANCES;
 
 u8 gAmmoItems[] = {
     ITEM_DEKU_STICK, // SLOT_DEKU_STICK
@@ -37,28 +49,32 @@ static s16 sEquipAnimTimer = 0;
 static s16 sEquipMoveTimer = 10;
 
 static s16 sAmmoVtxOffset[] = {
-    ITEM_QUAD_AMMO_STICK_TENS - ITEM_QUAD_AMMO_FIRST,     // ITEM_DEKU_STICK
-    ITEM_QUAD_AMMO_NUT_TENS - ITEM_QUAD_AMMO_FIRST,       // ITEM_DEKU_NUT
-    ITEM_QUAD_AMMO_BOMB_TENS - ITEM_QUAD_AMMO_FIRST,      // ITEM_BOMB
-    ITEM_QUAD_AMMO_BOW_TENS - ITEM_QUAD_AMMO_FIRST,       // ITEM_BOW
-    99,                                                   // (ITEM_ARROW_FIRE)
-    99,                                                   // (ITEM_DINS_FIRE)
-    ITEM_QUAD_AMMO_SLINGSHOT_TENS - ITEM_QUAD_AMMO_FIRST, // ITEM_SLINGSHOT
-    99,                                                   // (ITEM_OCARINA_FAIRY)
-    99,                                                   // (ITEM_OCARINA_OF_TIME)
-    ITEM_QUAD_AMMO_BOMBCHU_TENS - ITEM_QUAD_AMMO_FIRST,   // ITEM_BOMBCHU
-    99,                                                   // (ITEM_HOOKSHOT)
-    99,                                                   // (ITEM_LONGSHOT)
-    99,                                                   // (ITEM_ARROW_ICE)
-    99,                                                   // (ITEM_FARORES_WIND)
-    99,                                                   // (ITEM_BOOMERANG)
-    99,                                                   // (ITEM_LENS)
-    ITEM_QUAD_AMMO_BEAN_TENS - ITEM_QUAD_AMMO_FIRST,      // ITEM_MAGIC_BEAN
+    ITEM_QUAD_AMMO_STICK_FIRST - ITEM_QUAD_AMMO_FIRST,     // ITEM_DEKU_STICK
+    ITEM_QUAD_AMMO_NUT_FIRST - ITEM_QUAD_AMMO_FIRST,       // ITEM_DEKU_NUT
+    ITEM_QUAD_AMMO_BOMB_FIRST - ITEM_QUAD_AMMO_FIRST,      // ITEM_BOMB
+    ITEM_QUAD_AMMO_BOW_FIRST - ITEM_QUAD_AMMO_FIRST,       // ITEM_BOW
+    99,                                                    // (ITEM_ARROW_FIRE)
+    99,                                                    // (ITEM_DINS_FIRE)
+    ITEM_QUAD_AMMO_SLINGSHOT_FIRST - ITEM_QUAD_AMMO_FIRST, // ITEM_SLINGSHOT
+    99,                                                    // (ITEM_OCARINA_FAIRY)
+    99,                                                    // (ITEM_OCARINA_OF_TIME)
+    ITEM_QUAD_AMMO_BOMBCHU_FIRST - ITEM_QUAD_AMMO_FIRST,   // ITEM_BOMBCHU
+    99,                                                    // (ITEM_HOOKSHOT)
+    99,                                                    // (ITEM_LONGSHOT)
+    99,                                                    // (ITEM_ARROW_ICE)
+    99,                                                    // (ITEM_FARORES_WIND)
+    99,                                                    // (ITEM_BOOMERANG)
+    99,                                                    // (ITEM_LENS)
+    ITEM_QUAD_AMMO_BEAN_FIRST - ITEM_QUAD_AMMO_FIRST,      // ITEM_MAGIC_BEAN
 };
 
 void KaleidoScope_DrawAmmoCount(PauseContext* pauseCtx, GraphicsContext* gfxCtx, s16 item) {
     s16 ammo;
-    s16 ammoTens;
+    u8 ammoRomanGlyphs[ROMAN_NUMERAL_MAX_GLYPHS];
+    s16 ammoRomanGlyphCount;
+    s16 glyphIndex;
+    s16 glyphX;
+    s16 glyphBaseX;
 
     OPEN_DISPS(gfxCtx, "../z_kaleido_item.c", 69);
 
@@ -83,29 +99,30 @@ void KaleidoScope_DrawAmmoCount(PauseContext* pauseCtx, GraphicsContext* gfxCtx,
         }
     }
 
-    for (ammoTens = 0; ammo >= 10; ammoTens++) {
-        ammo -= 10;
-    }
+    ammoRomanGlyphCount = (ammo <= 50) ? RomanNumerals_Format(ammo, ammoRomanGlyphs, ARRAY_COUNT(ammoRomanGlyphs)) : 0;
 
     gDPPipeSync(POLY_OPA_DISP++);
 
-    if (ammoTens != 0) {
-        gSPVertex(POLY_OPA_DISP++, &pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + 0) * 4], 4, 0);
+    glyphBaseX = pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item]) * 4].v.ob[0];
+    glyphX = 0;
+    for (glyphIndex = 0; glyphIndex < ammoRomanGlyphCount; glyphIndex++) {
+        pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + glyphIndex) * 4 + 0].v.ob[0] =
+            pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + glyphIndex) * 4 + 2].v.ob[0] =
+                glyphBaseX + glyphX;
+        pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + glyphIndex) * 4 + 1].v.ob[0] =
+            pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + glyphIndex) * 4 + 3].v.ob[0] =
+                glyphBaseX + glyphX + ITEM_AMMO_DIGIT_QUAD_WIDTH;
 
-        gDPLoadTextureBlock(POLY_OPA_DISP++, ((u8*)gAmmoDigit0Tex + (8 * 8 * ammoTens)), G_IM_FMT_IA, G_IM_SIZ_8b, 8, 8,
-                            0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
-                            G_TX_NOLOD, G_TX_NOLOD);
+        gSPVertex(POLY_OPA_DISP++, &pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + glyphIndex) * 4],
+                  4, 0);
+
+        gDPLoadTextureBlock(POLY_OPA_DISP++, sKaleidoAmmoRomanGlyphTextures[ammoRomanGlyphs[glyphIndex]], G_IM_FMT_IA,
+                            G_IM_SIZ_8b, 8, 8, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK,
+                            G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
 
         gSP1Quadrangle(POLY_OPA_DISP++, 0, 2, 3, 1, 0);
+        glyphX += sKaleidoAmmoRomanGlyphAdvances[ammoRomanGlyphs[glyphIndex]];
     }
-
-    gSPVertex(POLY_OPA_DISP++, &pauseCtx->itemVtx[(ITEM_QUAD_AMMO_FIRST + sAmmoVtxOffset[item] + 1) * 4], 4, 0);
-
-    gDPLoadTextureBlock(POLY_OPA_DISP++, ((u8*)gAmmoDigit0Tex + (8 * 8 * ammo)), G_IM_FMT_IA, G_IM_SIZ_8b, 8, 8, 0,
-                        G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD,
-                        G_TX_NOLOD);
-
-    gSP1Quadrangle(POLY_OPA_DISP++, 0, 2, 3, 1, 0);
 
     CLOSE_DISPS(gfxCtx, "../z_kaleido_item.c", 116);
 }

@@ -471,6 +471,29 @@ static void* sMapPageBgQuadsENGTexs[] = {
     gPauseMap24Tex,
 };
 
+#if OOT_NTSC
+static void* sMapPageBgQuadsENGDungeonTexs[] = {
+    // column 1
+    gPauseMap00Tex,
+    gPauseMap01Tex,
+    gPauseMap02Tex,
+    gPauseMap03Tex,
+    gPauseMap04Tex,
+    // column 2
+    gPauseDungeon10ENGTex,
+    gPauseMap11Tex,
+    gPauseMap12Tex,
+    gPauseMap13Tex,
+    gPauseMap14Tex,
+    // column 3
+    gPauseMap20Tex,
+    gPauseMap21Tex,
+    gPauseMap22Tex,
+    gPauseMap23Tex,
+    gPauseMap24Tex,
+};
+#endif
+
 static void* sQuestPageBgQuadsENGTexs[] = {
     // column 1
     gPauseQuestStatus00ENGTex,
@@ -537,7 +560,11 @@ static void* sGameOverTexs[] = {
 #if OOT_NTSC
 #define EQUIPMENT_TEXS(language) ((language) != LANGUAGE_JPN ? sEquipPageBgQuadsENGTexs : sEquipPageBgQuadsJPNTexs)
 #define SELECT_ITEM_TEXS(language) ((language) != LANGUAGE_JPN ? sItemPageBgQuadsENGTexs : sItemPageBgQuadsJPNTexs)
-#define MAP_TEXS(language) ((language) != LANGUAGE_JPN ? sMapPageBgQuadsENGTexs : sMapPageBgQuadsJPNTexs)
+#define MAP_TEXS(language, inDungeon) \
+    ((language) == LANGUAGE_JPN ? sMapPageBgQuadsJPNTexs \
+                                : ((inDungeon) ? sMapPageBgQuadsENGDungeonTexs : sMapPageBgQuadsENGTexs))
+#define TO_MAP_LABEL_TEX(language, inDungeon, isMapLabel, texture) \
+    (((inDungeon) && ((language) != LANGUAGE_JPN) && (isMapLabel)) ? gPauseToDungeonENGTex : (texture))
 #define QUEST_STATUS_TEXS(language) ((language) != LANGUAGE_JPN ? sQuestPageBgQuadsENGTexs : sQuestPageBgQuadsJPNTexs)
 #define SAVE_TEXS(language) ((language) != LANGUAGE_JPN ? sSavePromptBgQuadsENGTexs : sSavePromptBgQuadsJPNTexs)
 #else
@@ -573,7 +600,8 @@ static void* sSavePromptBgQuadsTexs[] = {
 
 #define EQUIPMENT_TEXS(language) (sEquipPageBgQuadsTexs[(language)])
 #define SELECT_ITEM_TEXS(language) (sItemPageBgQuadsTexs[(language)])
-#define MAP_TEXS(language) (sMapPageBgQuadsTexs[(language)])
+#define MAP_TEXS(language, inDungeon) (sMapPageBgQuadsTexs[(language)])
+#define TO_MAP_LABEL_TEX(language, inDungeon, isMapLabel, texture) (texture)
 #define QUEST_STATUS_TEXS(language) (sQuestPageBgQuadsTexs[(language)])
 #define SAVE_TEXS(language) (sSavePromptBgQuadsTexs[(language)])
 #endif
@@ -1409,7 +1437,8 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
             MATRIX_FINALIZE_AND_LOAD(POLY_OPA_DISP++, gfxCtx, "../z_kaleido_scope_PAL.c", 1243);
 
             POLY_OPA_DISP =
-                KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx, MAP_TEXS(gSaveContext.language));
+                KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx,
+                                              MAP_TEXS(gSaveContext.language, sInDungeonScene));
 
             if (sInDungeonScene) {
                 KaleidoScope_DrawDungeonMap(play, gfxCtx);
@@ -1455,7 +1484,8 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
                 MATRIX_FINALIZE_AND_LOAD(POLY_OPA_DISP++, gfxCtx, "../z_kaleido_scope_PAL.c", 1303);
 
                 POLY_OPA_DISP =
-                    KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx, MAP_TEXS(gSaveContext.language));
+                    KaleidoScope_DrawPageSections(POLY_OPA_DISP, pauseCtx->mapPageVtx,
+                                                  MAP_TEXS(gSaveContext.language, sInDungeonScene));
 
                 if (sInDungeonScene) {
                     KaleidoScope_DrawDungeonMap(play, gfxCtx);
@@ -1948,7 +1978,7 @@ void KaleidoScope_DrawUIOverlay(PlayState* play) {
                 gAreaGsFlags[D_8082AE30[pauseCtx->cursorPoint[PAUSE_WORLD_MAP]]]) {
 
                 // UI_OVERLAY_QUAD_HAVE_ALL_GS
-                pauseCtx->uiOverlayVtx[24].v.ob[0] = pauseCtx->uiOverlayVtx[26].v.ob[0] = -74;
+                pauseCtx->uiOverlayVtx[24].v.ob[0] = pauseCtx->uiOverlayVtx[26].v.ob[0] = -70; // GS Token position overworld map
 
                 pauseCtx->uiOverlayVtx[25].v.ob[0] = pauseCtx->uiOverlayVtx[27].v.ob[0] =
                     pauseCtx->uiOverlayVtx[24].v.ob[0] + 19;
@@ -2029,11 +2059,17 @@ void KaleidoScope_DrawUIOverlay(PlayState* play) {
 
                 if (pauseCtx->cursorSpecialPos == PAUSE_CURSOR_PAGE_LEFT) {
                     POLY_OPA_DISP = KaleidoScope_QuadTextureIA8(
-                        POLY_OPA_DISP, sScrollLeftLabels[pauseCtx->pageIndex][gSaveContext.language],
+                        POLY_OPA_DISP,
+                        TO_MAP_LABEL_TEX(gSaveContext.language, sInDungeonScene,
+                                        pauseCtx->pageIndex == PAUSE_QUEST,
+                                        sScrollLeftLabels[pauseCtx->pageIndex][gSaveContext.language]),
                         TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HEIGHT, 0);
                 } else {
                     POLY_OPA_DISP = KaleidoScope_QuadTextureIA8(
-                        POLY_OPA_DISP, sScrollRightLabels[pauseCtx->pageIndex][gSaveContext.language],
+                        POLY_OPA_DISP,
+                        TO_MAP_LABEL_TEX(gSaveContext.language, sInDungeonScene,
+                                        pauseCtx->pageIndex == PAUSE_ITEM,
+                                        sScrollRightLabels[pauseCtx->pageIndex][gSaveContext.language]),
                         TO_PAGE_LABEL_TEX_WIDTH, TO_PAGE_LABEL_TEX_HEIGHT, 0);
                 }
             }
@@ -2769,7 +2805,7 @@ static s16 sQuestQuadsX[] = {
     -110, // QUEST_STONE_OF_AGONY
     -86,  // QUEST_GERUDOS_CARD
     -110, // QUEST_SKULL_TOKEN
-    -54,  // QUEST_HEART_PIECE
+    -39,  // QUEST_HEART_PIECE
     -98,  // QUEST_QUAD_SONG_NOTE_A1
     -86,  // QUEST_QUAD_SONG_NOTE_A2
     -74,  // QUEST_QUAD_SONG_NOTE_A3
@@ -2789,9 +2825,19 @@ static s16 sQuestQuadsX[] = {
     -88,  // QUEST_QUAD_SKULL_TOKENS_DIGIT1_SHADOW
     -81,  // QUEST_QUAD_SKULL_TOKENS_DIGIT2_SHADOW
     -72,  // QUEST_QUAD_SKULL_TOKENS_DIGIT3_SHADOW
-    -90,  // QUEST_QUAD_SKULL_TOKENS_DIGIT1
+    -63,  // QUEST_QUAD_SKULL_TOKENS_DIGIT4_SHADOW
+    -54,  // QUEST_QUAD_SKULL_TOKENS_DIGIT5_SHADOW
+    -45,  // QUEST_QUAD_SKULL_TOKENS_DIGIT6_SHADOW
+    -36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT7_SHADOW
+    -27,  // QUEST_QUAD_SKULL_TOKENS_DIGIT8_SHADOW
+    -93,  // QUEST_QUAD_SKULL_TOKENS_DIGIT1
     -83,  // QUEST_QUAD_SKULL_TOKENS_DIGIT2
     -74,  // QUEST_QUAD_SKULL_TOKENS_DIGIT3
+    -66,  // QUEST_QUAD_SKULL_TOKENS_DIGIT4
+    -57,  // QUEST_QUAD_SKULL_TOKENS_DIGIT5
+    -48,  // QUEST_QUAD_SKULL_TOKENS_DIGIT6
+    -39,  // QUEST_QUAD_SKULL_TOKENS_DIGIT7
+    -30,  // QUEST_QUAD_SKULL_TOKENS_DIGIT8
 };
 
 static s16 sQuestQuadsY[] = {
@@ -2839,9 +2885,19 @@ static s16 sQuestQuadsY[] = {
     34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT1_SHADOW
     34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT2_SHADOW
     34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT3_SHADOW
+    34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT4_SHADOW
+    34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT5_SHADOW
+    34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT6_SHADOW
+    34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT7_SHADOW
+    34,  // QUEST_QUAD_SKULL_TOKENS_DIGIT8_SHADOW
     36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT1
     36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT2
     36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT3
+    36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT4
+    36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT5
+    36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT6
+    36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT7
+    36,  // QUEST_QUAD_SKULL_TOKENS_DIGIT8
 };
 
 static s16 sQuestQuadsSize[] = {
@@ -2889,9 +2945,19 @@ static s16 sQuestQuadsSize[] = {
     16, // QUEST_QUAD_SKULL_TOKENS_DIGIT1_SHADOW
     16, // QUEST_QUAD_SKULL_TOKENS_DIGIT2_SHADOW
     16, // QUEST_QUAD_SKULL_TOKENS_DIGIT3_SHADOW
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT4_SHADOW
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT5_SHADOW
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT6_SHADOW
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT7_SHADOW
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT8_SHADOW
     16, // QUEST_QUAD_SKULL_TOKENS_DIGIT1
     16, // QUEST_QUAD_SKULL_TOKENS_DIGIT2
     16, // QUEST_QUAD_SKULL_TOKENS_DIGIT3
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT4
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT5
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT6
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT7
+    16, // QUEST_QUAD_SKULL_TOKENS_DIGIT8
 };
 
 void KaleidoScope_SetVertices(PlayState* play, GraphicsContext* gfxCtx) {
@@ -2901,6 +2967,7 @@ void KaleidoScope_SetVertices(PlayState* play, GraphicsContext* gfxCtx) {
     s16 i;
     s16 j;
     s16 k;
+    s16 l;
 
     pauseCtx->pagesYOrigin1 = 0;
 
@@ -3104,58 +3171,46 @@ void KaleidoScope_SetVertices(PlayState* play, GraphicsContext* gfxCtx) {
     for (i = ITEM_QUAD_AMMO_FIRST * 4, j = 0; j < 7; j++) {
         k = sItemVtxQuadsWithAmmo[j];
 
-        // tens
+        for (l = 0; l < ITEM_AMMO_GLYPH_QUAD_COUNT; l++) {
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.ob[0] = pauseCtx->itemVtx[i + (l * 4) + 2].v.ob[0] =
+                pauseCtx->itemVtx[k].v.ob[0] + (l * ITEM_AMMO_GLYPH_QUAD_ADVANCE);
 
-        pauseCtx->itemVtx[i + 0].v.ob[0] = pauseCtx->itemVtx[i + 2].v.ob[0] =
-            pauseCtx->itemVtx[k].v.ob[0] + ITEM_AMMO_TENS_QUAD_OFFSET_X;
+            pauseCtx->itemVtx[i + (l * 4) + 1].v.ob[0] = pauseCtx->itemVtx[i + (l * 4) + 3].v.ob[0] =
+                pauseCtx->itemVtx[i + (l * 4) + 0].v.ob[0] + ITEM_AMMO_DIGIT_QUAD_WIDTH;
 
-        pauseCtx->itemVtx[i + 1].v.ob[0] = pauseCtx->itemVtx[i + 3].v.ob[0] =
-            pauseCtx->itemVtx[i + 0].v.ob[0] + ITEM_AMMO_DIGIT_QUAD_WIDTH;
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.ob[1] = pauseCtx->itemVtx[i + (l * 4) + 1].v.ob[1] =
+                pauseCtx->itemVtx[k].v.ob[1] - ITEM_AMMO_GLYPH_QUAD_OFFSET_Y;
 
-        pauseCtx->itemVtx[i + 0].v.ob[1] = pauseCtx->itemVtx[i + 1].v.ob[1] =
-            pauseCtx->itemVtx[k].v.ob[1] - ITEM_AMMO_TENS_QUAD_OFFSET_Y;
+            pauseCtx->itemVtx[i + (l * 4) + 2].v.ob[1] = pauseCtx->itemVtx[i + (l * 4) + 3].v.ob[1] =
+                pauseCtx->itemVtx[i + (l * 4) + 0].v.ob[1] - ITEM_AMMO_DIGIT_QUAD_HEIGHT;
 
-        pauseCtx->itemVtx[i + 2].v.ob[1] = pauseCtx->itemVtx[i + 3].v.ob[1] =
-            pauseCtx->itemVtx[i + 0].v.ob[1] - ITEM_AMMO_DIGIT_QUAD_HEIGHT;
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.ob[2] = pauseCtx->itemVtx[i + (l * 4) + 1].v.ob[2] =
+                pauseCtx->itemVtx[i + (l * 4) + 2].v.ob[2] = pauseCtx->itemVtx[i + (l * 4) + 3].v.ob[2] = 0;
 
-        // ones
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.flag = pauseCtx->itemVtx[i + (l * 4) + 1].v.flag =
+                pauseCtx->itemVtx[i + (l * 4) + 2].v.flag = pauseCtx->itemVtx[i + (l * 4) + 3].v.flag = 0;
 
-        pauseCtx->itemVtx[i + 4].v.ob[0] = pauseCtx->itemVtx[i + 6].v.ob[0] =
-            pauseCtx->itemVtx[i + 0].v.ob[0] + ITEM_AMMO_ONES_QUAD_OFFSET_X;
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.tc[0] = pauseCtx->itemVtx[i + (l * 4) + 0].v.tc[1] =
+                pauseCtx->itemVtx[i + (l * 4) + 1].v.tc[1] = pauseCtx->itemVtx[i + (l * 4) + 2].v.tc[0] = 0;
 
-        pauseCtx->itemVtx[i + 5].v.ob[0] = pauseCtx->itemVtx[i + 7].v.ob[0] =
-            pauseCtx->itemVtx[i + 4].v.ob[0] + ITEM_AMMO_DIGIT_QUAD_WIDTH;
+            pauseCtx->itemVtx[i + (l * 4) + 1].v.tc[0] = pauseCtx->itemVtx[i + (l * 4) + 2].v.tc[1] =
+                pauseCtx->itemVtx[i + (l * 4) + 3].v.tc[0] = pauseCtx->itemVtx[i + (l * 4) + 3].v.tc[1] =
+                    ITEM_AMMO_DIGIT_QUAD_TEX_SIZE * (1 << 5);
 
-        pauseCtx->itemVtx[i + 4].v.ob[1] = pauseCtx->itemVtx[i + 5].v.ob[1] =
-            pauseCtx->itemVtx[i + 0].v.ob[1] - ITEM_AMMO_ONES_QUAD_OFFSET_Y;
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.cn[0] = pauseCtx->itemVtx[i + (l * 4) + 1].v.cn[0] =
+                pauseCtx->itemVtx[i + (l * 4) + 2].v.cn[0] = pauseCtx->itemVtx[i + (l * 4) + 3].v.cn[0] =
+                    pauseCtx->itemVtx[i + (l * 4) + 0].v.cn[1] = pauseCtx->itemVtx[i + (l * 4) + 1].v.cn[1] =
+                        pauseCtx->itemVtx[i + (l * 4) + 2].v.cn[1] = pauseCtx->itemVtx[i + (l * 4) + 3].v.cn[1] =
+                            pauseCtx->itemVtx[i + (l * 4) + 0].v.cn[2] = pauseCtx->itemVtx[i + (l * 4) + 1].v.cn[2] =
+                                pauseCtx->itemVtx[i + (l * 4) + 2].v.cn[2] =
+                                    pauseCtx->itemVtx[i + (l * 4) + 3].v.cn[2] = 255;
 
-        pauseCtx->itemVtx[i + 6].v.ob[1] = pauseCtx->itemVtx[i + 7].v.ob[1] =
-            pauseCtx->itemVtx[i + 4].v.ob[1] - ITEM_AMMO_DIGIT_QUAD_HEIGHT;
-
-        // tens, ones
-
-        for (k = 0; k < 2; k++, i += 4) {
-            pauseCtx->itemVtx[i + 0].v.ob[2] = pauseCtx->itemVtx[i + 1].v.ob[2] = pauseCtx->itemVtx[i + 2].v.ob[2] =
-                pauseCtx->itemVtx[i + 3].v.ob[2] = 0;
-
-            pauseCtx->itemVtx[i + 0].v.flag = pauseCtx->itemVtx[i + 1].v.flag = pauseCtx->itemVtx[i + 2].v.flag =
-                pauseCtx->itemVtx[i + 3].v.flag = 0;
-
-            pauseCtx->itemVtx[i + 0].v.tc[0] = pauseCtx->itemVtx[i + 0].v.tc[1] = pauseCtx->itemVtx[i + 1].v.tc[1] =
-                pauseCtx->itemVtx[i + 2].v.tc[0] = 0;
-
-            pauseCtx->itemVtx[i + 1].v.tc[0] = pauseCtx->itemVtx[i + 2].v.tc[1] = pauseCtx->itemVtx[i + 3].v.tc[0] =
-                pauseCtx->itemVtx[i + 3].v.tc[1] = ITEM_AMMO_DIGIT_QUAD_TEX_SIZE * (1 << 5);
-
-            pauseCtx->itemVtx[i + 0].v.cn[0] = pauseCtx->itemVtx[i + 1].v.cn[0] = pauseCtx->itemVtx[i + 2].v.cn[0] =
-                pauseCtx->itemVtx[i + 3].v.cn[0] = pauseCtx->itemVtx[i + 0].v.cn[1] = pauseCtx->itemVtx[i + 1].v.cn[1] =
-                    pauseCtx->itemVtx[i + 2].v.cn[1] = pauseCtx->itemVtx[i + 3].v.cn[1] =
-                        pauseCtx->itemVtx[i + 0].v.cn[2] = pauseCtx->itemVtx[i + 1].v.cn[2] =
-                            pauseCtx->itemVtx[i + 2].v.cn[2] = pauseCtx->itemVtx[i + 3].v.cn[2] = 255;
-
-            pauseCtx->itemVtx[i + 0].v.cn[3] = pauseCtx->itemVtx[i + 1].v.cn[3] = pauseCtx->itemVtx[i + 2].v.cn[3] =
-                pauseCtx->itemVtx[i + 3].v.cn[3] = pauseCtx->alpha;
+            pauseCtx->itemVtx[i + (l * 4) + 0].v.cn[3] = pauseCtx->itemVtx[i + (l * 4) + 1].v.cn[3] =
+                pauseCtx->itemVtx[i + (l * 4) + 2].v.cn[3] = pauseCtx->itemVtx[i + (l * 4) + 3].v.cn[3] =
+                    pauseCtx->alpha;
         }
+
+        i += ITEM_AMMO_GLYPH_QUAD_COUNT * 4;
     }
 
     pauseCtx->equipVtx = GRAPH_ALLOC(gfxCtx, (EQUIP_QUAD_MAX * 4) * sizeof(Vtx));
@@ -3564,7 +3619,7 @@ void KaleidoScope_UpdateCursorVtx(PlayState* play) {
                 tlOffsetX = -4;
                 tlOffsetY = 4;
                 bottomOffsetY = 13;
-                rightOffsetX = 34;
+                rightOffsetX = 54;
             } else if (pauseCtx->cursorSlot[pauseCtx->pageIndex] < QUEST_SONG_MINUET) {
                 tlOffsetX = -1;
                 tlOffsetY = 1;
@@ -3772,6 +3827,18 @@ void KaleidoScope_Update(PlayState* play) {
                 case SCENE_SPIRIT_TEMPLE_BOSS:
                 case SCENE_SHADOW_TEMPLE_BOSS:
                     sInDungeonScene = true;
+#if OOT_NTSC
+                //    if (gSaveContext.language != LANGUAGE_JPN) {
+                //        DMA_REQUEST_SYNC(sPauseMap10JPNTexBuffer,
+                 //                        (uintptr_t)_icon_item_jpn_staticSegmentRomStart +
+                 //                            SEGMENT_OFFSET(gPauseMap10JPNTex),
+                 //                        sizeof(sPauseMap10JPNTexBuffer), "../z_kaleido_scope_PAL.c", UNK_LINE);
+                 //       DMA_REQUEST_SYNC(sPauseToMapJPNTexBuffer,
+                 //                        (uintptr_t)_icon_item_jpn_staticSegmentRomStart +
+                 //                            SEGMENT_OFFSET(gPauseToMapJPNTex),
+                 //                        sizeof(sPauseToMapJPNTexBuffer), "../z_kaleido_scope_PAL.c", UNK_LINE);
+                 //   }
+#endif
                     size2 = (uintptr_t)_icon_item_dungeon_staticSegmentRomEnd -
                             (uintptr_t)_icon_item_dungeon_staticSegmentRomStart;
                     PRINTF("icon_item_dungeon dungeon-size2=%x\n", size2);

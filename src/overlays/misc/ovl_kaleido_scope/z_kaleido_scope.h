@@ -62,11 +62,21 @@ typedef enum QuestQuad {
     /* 41 */ QUEST_QUAD_SKULL_TOKENS_DIGIT1_SHADOW,
     /* 42 */ QUEST_QUAD_SKULL_TOKENS_DIGIT2_SHADOW,
     /* 43 */ QUEST_QUAD_SKULL_TOKENS_DIGIT3_SHADOW,
+    /* 44 */ QUEST_QUAD_SKULL_TOKENS_DIGIT4_SHADOW,
+    /* 45 */ QUEST_QUAD_SKULL_TOKENS_DIGIT5_SHADOW,
+    /* 46 */ QUEST_QUAD_SKULL_TOKENS_DIGIT6_SHADOW,
+    /* 47 */ QUEST_QUAD_SKULL_TOKENS_DIGIT7_SHADOW,
+    /* 48 */ QUEST_QUAD_SKULL_TOKENS_DIGIT8_SHADOW,
     // Amount of skulltula tokens
-    /* 44 */ QUEST_QUAD_SKULL_TOKENS_DIGIT1,
-    /* 45 */ QUEST_QUAD_SKULL_TOKENS_DIGIT2,
-    /* 46 */ QUEST_QUAD_SKULL_TOKENS_DIGIT3,
-    /* 47 */ QUEST_QUAD_MAX
+    /* 49 */ QUEST_QUAD_SKULL_TOKENS_DIGIT1,
+    /* 50 */ QUEST_QUAD_SKULL_TOKENS_DIGIT2,
+    /* 51 */ QUEST_QUAD_SKULL_TOKENS_DIGIT3,
+    /* 52 */ QUEST_QUAD_SKULL_TOKENS_DIGIT4,
+    /* 53 */ QUEST_QUAD_SKULL_TOKENS_DIGIT5,
+    /* 54 */ QUEST_QUAD_SKULL_TOKENS_DIGIT6,
+    /* 55 */ QUEST_QUAD_SKULL_TOKENS_DIGIT7,
+    /* 56 */ QUEST_QUAD_SKULL_TOKENS_DIGIT8,
+    /* 57 */ QUEST_QUAD_MAX
 } QuestQuad;
 
 #define EQUIP_CURSOR_X_UPG 0
@@ -181,14 +191,11 @@ typedef enum PromptQuad {
 #define ITEM_AMMO_DIGIT_QUAD_WIDTH 8
 #define ITEM_AMMO_DIGIT_QUAD_HEIGHT 8
 #define ITEM_AMMO_DIGIT_QUAD_TEX_SIZE 8
+#define ITEM_AMMO_GLYPH_QUAD_COUNT 8
+#define ITEM_AMMO_GLYPH_QUAD_ADVANCE 4
 
 // Relative to the corresponding ITEM_QUAD_GRID_ quad
-#define ITEM_AMMO_TENS_QUAD_OFFSET_X 0
-#define ITEM_AMMO_TENS_QUAD_OFFSET_Y 22
-
-// Relative to the ammo tens digit
-#define ITEM_AMMO_ONES_QUAD_OFFSET_X 6
-#define ITEM_AMMO_ONES_QUAD_OFFSET_Y 0
+#define ITEM_AMMO_GLYPH_QUAD_OFFSET_Y 22
 
 typedef enum ItemQuad {
     // 0 to 23 are the ITEM_GRID_ROWS*ITEM_GRID_COLS item grid
@@ -199,23 +206,16 @@ typedef enum ItemQuad {
     /* 24 */ ITEM_QUAD_GRID_SELECTED_C_LEFT,
     /* 25 */ ITEM_QUAD_GRID_SELECTED_C_DOWN,
     /* 26 */ ITEM_QUAD_GRID_SELECTED_C_RIGHT,
-    // Digits for showing ammo count
+    // Quads for showing ammo count
     /* 27 */ ITEM_QUAD_AMMO_FIRST,
-    /* 27 */ ITEM_QUAD_AMMO_STICK_TENS = ITEM_QUAD_AMMO_FIRST,
-    /* 28 */ ITEM_QUAD_AMMO_STICK_ONES,
-    /* 29 */ ITEM_QUAD_AMMO_NUT_TENS,
-    /* 30 */ ITEM_QUAD_AMMO_NUT_ONES,
-    /* 31 */ ITEM_QUAD_AMMO_BOMB_TENS,
-    /* 32 */ ITEM_QUAD_AMMO_BOMB_ONES,
-    /* 33 */ ITEM_QUAD_AMMO_BOW_TENS,
-    /* 34 */ ITEM_QUAD_AMMO_BOW_ONES,
-    /* 35 */ ITEM_QUAD_AMMO_SLINGSHOT_TENS,
-    /* 36 */ ITEM_QUAD_AMMO_SLINGSHOT_ONES,
-    /* 37 */ ITEM_QUAD_AMMO_BOMBCHU_TENS,
-    /* 38 */ ITEM_QUAD_AMMO_BOMBCHU_ONES,
-    /* 39 */ ITEM_QUAD_AMMO_BEAN_TENS,
-    /* 40 */ ITEM_QUAD_AMMO_BEAN_ONES,
-    /* 41 */ ITEM_QUAD_MAX
+    /* 27 */ ITEM_QUAD_AMMO_STICK_FIRST = ITEM_QUAD_AMMO_FIRST,
+    /* 35 */ ITEM_QUAD_AMMO_NUT_FIRST = ITEM_QUAD_AMMO_STICK_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT,
+    /* 43 */ ITEM_QUAD_AMMO_BOMB_FIRST = ITEM_QUAD_AMMO_NUT_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT,
+    /* 51 */ ITEM_QUAD_AMMO_BOW_FIRST = ITEM_QUAD_AMMO_BOMB_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT,
+    /* 59 */ ITEM_QUAD_AMMO_SLINGSHOT_FIRST = ITEM_QUAD_AMMO_BOW_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT,
+    /* 67 */ ITEM_QUAD_AMMO_BOMBCHU_FIRST = ITEM_QUAD_AMMO_SLINGSHOT_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT,
+    /* 75 */ ITEM_QUAD_AMMO_BEAN_FIRST = ITEM_QUAD_AMMO_BOMBCHU_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT,
+    /* 83 */ ITEM_QUAD_MAX = ITEM_QUAD_AMMO_BEAN_FIRST + ITEM_AMMO_GLYPH_QUAD_COUNT
 } ItemQuad;
 
 #define TO_PAGE_LABEL_TEX_WIDTH 128
@@ -233,13 +233,14 @@ typedef enum ItemQuad {
 #define UI_OVERLAY_QUAD_INFO_TEXT_TEX_HEIGHT 16
 
 typedef enum UIOverlayQuad {
-    /* 0 */ UI_OVERLAY_QUAD_INFO_BG_LEFT, // The left half of the info plate background
+    /* 0 */ UI_OVERLAY_QUAD_INFO_BG_LEFT,  // The left half of the info plate background
     /* 1 */ UI_OVERLAY_QUAD_INFO_BG_RIGHT, // The right half of the info plate background
-    /* 2 */ UI_OVERLAY_QUAD_BUTTON_LEFT, // The button for scrolling to the left page
-    /* 3 */ UI_OVERLAY_QUAD_BUTTON_RIGHT, // The button for scrolling to the right page
-    /* 4 */ UI_OVERLAY_QUAD_INFO_ICON, // The icon in the info plate
-    /* 5 */ UI_OVERLAY_QUAD_INFO_TEXT, // The text in the info plate
-    /* 6 */ UI_OVERLAY_QUAD_HAVE_ALL_GS, // On the overworld map page, the indicator that the selected area has been cleared of gold skulltulas
+    /* 2 */ UI_OVERLAY_QUAD_BUTTON_LEFT,   // The button for scrolling to the left page
+    /* 3 */ UI_OVERLAY_QUAD_BUTTON_RIGHT,  // The button for scrolling to the right page
+    /* 4 */ UI_OVERLAY_QUAD_INFO_ICON,     // The icon in the info plate
+    /* 5 */ UI_OVERLAY_QUAD_INFO_TEXT,     // The text in the info plate
+    /* 6 */ UI_OVERLAY_QUAD_HAVE_ALL_GS,   // On the overworld map page, the indicator that the selected area has been
+                                           // cleared of gold skulltulas
     /* 7 */ UI_OVERLAY_QUAD_MAX
 } UIOverlayQuad;
 

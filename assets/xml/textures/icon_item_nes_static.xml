@@ -15,6 +15,7 @@
         <Texture Name="gPauseToPlayMelodyENGTex" Format="ia8" Width="80" Height="16" Offset="0x4380"/>
         <Texture Name="gPauseToSelectItemENGTex" Format="ia8" Width="128" Height="16" Offset="0x4880"/>
         <Texture Name="gPauseToMapENGTex" Format="ia8" Width="128" Height="16" Offset="0x5080"/>
+        <Texture Name="gPauseToDungeonENGTex" Format="ia8" Width="128" Height="16" Offset="0x5C80"/>
         <Texture Name="gPauseToQuestStatusENGTex" Format="ia8" Width="128" Height="16" Offset="0x5880"/>
         <Texture Name="gPauseToEquipmentENGTex" Format="ia8" Width="128" Height="16" Offset="0x6080"/>
         <Texture Name="gPauseSavePromptENGTex" Format="ia8" Width="152" Height="16" Offset="0x6880"/>
@@ -27,6 +28,7 @@
         <Texture Name="gPauseSelectItem10ENGTex" Format="ia8" Width="80" Height="32" Offset="0x9680"/>
         <Texture Name="gPauseSelectItem20ENGTex" Format="ia8" Width="80" Height="32" Offset="0xA080"/>
         <Texture Name="gPauseMap10ENGTex" Format="ia8" Width="80" Height="32" Offset="0xAA80"/>
+        <Texture Name="gPauseDungeon10ENGTex" Format="ia8" Width="80" Height="32" Offset="0xE480"/>
         <Texture Name="gPauseQuestStatus00ENGTex" Format="ia8" Width="80" Height="32" Offset="0xB480"/>
         <Texture Name="gPauseQuestStatus10ENGTex" Format="ia8" Width="80" Height="32" Offset="0xBE80"/>
         <Texture Name="gPauseQuestStatus20ENGTex" Format="ia8" Width="80" Height="32" Offset="0xC880"/>
