@@ -13,7 +13,9 @@ compile_commands.json
 # Project-specific ignores
 .make_options.mk
 extracted/
-build/
+build/*
+!build/ntsc-1.0/
+build/ntsc-1.0/*
 expected/
 docs/doxygen/
 *.z64
